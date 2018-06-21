@@ -8,9 +8,9 @@ import android.view.ViewGroup;
 
 
 public class MonitorTab extends Fragment {
-
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+
         return inflater.inflate(R.layout.monitor_tab, container, false);
     }
 
