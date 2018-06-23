@@ -71,7 +71,7 @@ public class MainActivity extends AppCompatActivity {
 
 
 
-        /*AQUI AGREGA LA CONEXIÓN AL BROKER*/
+        /*CONEXIÓN AL BROKER*/
         mqttAndroidClient = new MqttAndroidClient(getApplicationContext(), serverUri, System.currentTimeMillis() + "");
         mqttConnectOptions.setAutomaticReconnect(true);
         mqttConnectOptions.setCleanSession(false);
@@ -97,7 +97,7 @@ public class MainActivity extends AppCompatActivity {
             ex.printStackTrace();
         }
 
-        
+
     }
 
 
@@ -194,7 +194,7 @@ public class MainActivity extends AppCompatActivity {
 
 
     /*---------------------------------------------------------------------------------------*/
-    /* FUNCIONES DE MQTT */
+    /* MÉTODOS DE MQTT */
     public void suscribirTemperatura() {
         try {
 
