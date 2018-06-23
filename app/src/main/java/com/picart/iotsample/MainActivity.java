@@ -19,18 +19,23 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import org.eclipse.paho.android.service.MqttAndroidClient;
-import org.eclipse.paho.client.mqttv3.DisconnectedBufferOptions;
 import org.eclipse.paho.client.mqttv3.IMqttActionListener;
-import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
 import org.eclipse.paho.client.mqttv3.IMqttMessageListener;
 import org.eclipse.paho.client.mqttv3.IMqttToken;
-import org.eclipse.paho.client.mqttv3.MqttCallback;
 import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
 import org.eclipse.paho.client.mqttv3.MqttException;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
 
 
 public class MainActivity extends AppCompatActivity {
+
+
+    // Atributos a modificar
+    String topicTemperatura = "sensores/temperatura";
+    String topicHumedad = "sensores/humedad";
+    final String publishTopic = "input";
+    String broker = "192.168.1.64";
+    String publishMessage = "ON";
 
     /**
      * The {@link android.support.v4.view.PagerAdapter} that will provide
@@ -47,14 +52,10 @@ public class MainActivity extends AppCompatActivity {
      */
     private ViewPager mViewPager;
 
-
+    // atributos avanzados
     MqttAndroidClient mqttAndroidClient;
-    String subscriptionTopic = "test";
-    final String publishTopic = "pubTopic";
-    String serverUri = "tcp://192.168.1.69:1883";
-    String publishMessage = "Hello World!";
-
     MqttConnectOptions mqttConnectOptions = new MqttConnectOptions();
+    String serverUri = "tcp://"+ broker +":1883";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -81,29 +82,28 @@ public class MainActivity extends AppCompatActivity {
 
 
         /*AQUI AGREGA LA CONEXIÓN AL BROKER*/
-        mqttAndroidClient = new MqttAndroidClient(getApplicationContext(), serverUri, System.currentTimeMillis()+"");
+        mqttAndroidClient = new MqttAndroidClient(getApplicationContext(), serverUri, System.currentTimeMillis() + "");
         mqttConnectOptions.setAutomaticReconnect(true);
         mqttConnectOptions.setCleanSession(false);
         try {
             mqttAndroidClient.connect(mqttConnectOptions, null, new IMqttActionListener() {
-                @Override
+
                 public void onSuccess(IMqttToken asyncActionToken) {
                     System.out.println("Conected to broker " + serverUri);
+                    notificar("Conectado a broker: " + broker);
+
                     suscribirATemperatura();
-                    publishMessage();
-                    Snackbar.make(findViewById(R.id.main_content), "Conectado a broker", Snackbar.LENGTH_LONG)
-                            .setAction("Action", null).show();
+                    suscribirAHumedad();
                 }
 
-                @Override
+
                 public void onFailure(IMqttToken asyncActionToken, Throwable exception) {
                     System.out.println("Failed to connect to: " + serverUri);
-                    Snackbar.make(findViewById(R.id.main_content), "Conexión fallida", Snackbar.LENGTH_LONG)
-                            .setAction("Action", null).show();
+                    notificar("Conexión fallida");
                 }
             });
 
-        } catch (MqttException ex){
+        } catch (MqttException ex) {
             ex.printStackTrace();
         }
 
@@ -209,62 +209,77 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
-
-
-
-
-
     /*---------------------------------------------------------------------------------------*/
     /* FUNCIONES DE MQTT */
-    public void suscribirATemperatura()
-    {
+    public void suscribirATemperatura() {
         try {
-            mqttAndroidClient.subscribe(subscriptionTopic, 0, null, new IMqttActionListener() {
-                @Override
-                public void onSuccess(IMqttToken asyncActionToken) {
-                    System.out.println("Subscribed!");
-                }
 
-                @Override
-                public void onFailure(IMqttToken asyncActionToken, Throwable exception) {
-                    System.out.println("Failed to subscribe");
-                }
-            });
-
-
-            mqttAndroidClient.subscribe(subscriptionTopic, 0, new IMqttMessageListener() {
+            mqttAndroidClient.subscribe(topicTemperatura, 0, new IMqttMessageListener() {
                 @Override
                 public void messageArrived(String topic, MqttMessage message) {
-                    System.out.println("Mensaje recibido");
                     // message Arrived!
                     String messageText = new String(message.getPayload());
                     System.out.println("Message: " + topic + " : " + messageText);
 
                     TextView label = findViewById(R.id.temp_val);
-                    label.setText(messageText);
+
+                    String valor = messageText + "° C";
+                    label.setText(valor);
                 }
             });
 
-        } catch (MqttException ex){
+        } catch (MqttException ex) {
             System.err.println("Exception whilst subscribing");
             ex.printStackTrace();
         }
     }
 
 
-    public void publishMessage()
-    {
+    public void suscribirAHumedad() {
+        try {
+
+            mqttAndroidClient.subscribe(topicHumedad, 0, new IMqttMessageListener() {
+                @Override
+                public void messageArrived(String topic, MqttMessage message) {
+                    // message Arrived!
+                    String messageText = new String(message.getPayload());
+                    System.out.println("Message: " + topic + " : " + messageText);
+
+                    TextView label = findViewById(R.id.hum_val);
+
+                    String valor = messageText;
+                    label.setText(valor);
+                }
+            });
+
+        } catch (MqttException ex) {
+            System.err.println("Exception whilst subscribing");
+            ex.printStackTrace();
+        }
+    }
+
+
+    public void publishMessage() {
         try {
             MqttMessage message = new MqttMessage();
             message.setPayload(publishMessage.getBytes());
             mqttAndroidClient.publish(publishTopic, message);
+            notificar("Mensaje publicado");
             System.out.println("Message Published");
-            if(!mqttAndroidClient.isConnected()){
+            if (!mqttAndroidClient.isConnected()) {
                 System.out.println(mqttAndroidClient.getBufferedMessageCount() + " messages in buffer.");
             }
         } catch (MqttException e) {
+            notificar("Error publicando");
             System.err.println("Error Publishing: " + e.getMessage());
             e.printStackTrace();
         }
+    }
+
+
+    public void notificar(String text)
+    {
+        Snackbar.make(findViewById(R.id.main_content), text, Snackbar.LENGTH_LONG)
+                .setAction("Action", null).show();
     }
 }

@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">IoT </string>
+    <string name="app_name">Curso IoT </string>
     <string name="tab_text_1">Monitorear</string>
     <string name="tab_text_2">Controlar</string>
     <string name="tab_text_3">Tab 3</string>
