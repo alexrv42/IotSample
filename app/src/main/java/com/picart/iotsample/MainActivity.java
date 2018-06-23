@@ -21,8 +21,10 @@ import android.widget.TextView;
 import org.eclipse.paho.android.service.MqttAndroidClient;
 import org.eclipse.paho.client.mqttv3.DisconnectedBufferOptions;
 import org.eclipse.paho.client.mqttv3.IMqttActionListener;
+import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
 import org.eclipse.paho.client.mqttv3.IMqttMessageListener;
 import org.eclipse.paho.client.mqttv3.IMqttToken;
+import org.eclipse.paho.client.mqttv3.MqttCallback;
 import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
 import org.eclipse.paho.client.mqttv3.MqttException;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
@@ -60,23 +62,25 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         // Create the adapter that will return a fragment for each of the three
         // primary sections of the activity.
         mSectionsPagerAdapter = new SectionsPagerAdapter(getSupportFragmentManager());
 
         // Set up the ViewPager with the sections adapter.
-        mViewPager = (ViewPager) findViewById(R.id.container);
+        mViewPager = findViewById(R.id.container);
         mViewPager.setAdapter(mSectionsPagerAdapter);
 
-        TabLayout tabLayout = (TabLayout) findViewById(R.id.tabs);
+        TabLayout tabLayout = findViewById(R.id.tabs);
 
         mViewPager.addOnPageChangeListener(new TabLayout.TabLayoutOnPageChangeListener(tabLayout));
         tabLayout.addOnTabSelectedListener(new TabLayout.ViewPagerOnTabSelectedListener(mViewPager));
 
 
-        /* AGREGAR ESTO */
+
+
+        /*AQUI AGREGA LA CONEXIÓN AL BROKER*/
         mqttAndroidClient = new MqttAndroidClient(getApplicationContext(), serverUri, System.currentTimeMillis()+"");
         mqttConnectOptions.setAutomaticReconnect(true);
         mqttConnectOptions.setCleanSession(false);
@@ -85,15 +89,9 @@ public class MainActivity extends AppCompatActivity {
                 @Override
                 public void onSuccess(IMqttToken asyncActionToken) {
                     System.out.println("Conected to broker " + serverUri);
-                    DisconnectedBufferOptions disconnectedBufferOptions = new DisconnectedBufferOptions();
-                    disconnectedBufferOptions.setBufferEnabled(true);
-                    disconnectedBufferOptions.setBufferSize(100);
-                    disconnectedBufferOptions.setPersistBuffer(false);
-                    disconnectedBufferOptions.setDeleteOldestMessages(false);
-                    mqttAndroidClient.setBufferOpts(disconnectedBufferOptions);
-                    subscribeToTopic();
+                    suscribirATemperatura();
                     publishMessage();
-                    Snackbar.make(findViewById(R.id.main_content), "Conectado", Snackbar.LENGTH_LONG)
+                    Snackbar.make(findViewById(R.id.main_content), "Conectado a broker", Snackbar.LENGTH_LONG)
                             .setAction("Action", null).show();
                 }
 
@@ -108,6 +106,12 @@ public class MainActivity extends AppCompatActivity {
         } catch (MqttException ex){
             ex.printStackTrace();
         }
+
+
+
+        /* AQUÍ AGREGA EL LISTENER DEL BOTON ON */
+
+        /* AQUÍ AGREGA EL LISTENER DEL BOTON OFF */
     }
 
 
@@ -205,7 +209,15 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
-    public void subscribeToTopic(){
+
+
+
+
+
+    /*---------------------------------------------------------------------------------------*/
+    /* FUNCIONES DE MQTT */
+    public void suscribirATemperatura()
+    {
         try {
             mqttAndroidClient.subscribe(subscriptionTopic, 0, null, new IMqttActionListener() {
                 @Override
@@ -219,14 +231,16 @@ public class MainActivity extends AppCompatActivity {
                 }
             });
 
+
             mqttAndroidClient.subscribe(subscriptionTopic, 0, new IMqttMessageListener() {
                 @Override
-                public void messageArrived(String topic, MqttMessage message) throws Exception {
+                public void messageArrived(String topic, MqttMessage message) {
+                    System.out.println("Mensaje recibido");
                     // message Arrived!
                     String messageText = new String(message.getPayload());
                     System.out.println("Message: " + topic + " : " + messageText);
 
-                    TextView label = ((TextView) findViewById(R.id.temp_val));
+                    TextView label = findViewById(R.id.temp_val);
                     label.setText(messageText);
                 }
             });
@@ -238,8 +252,8 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
-    public void publishMessage(){
-
+    public void publishMessage()
+    {
         try {
             MqttMessage message = new MqttMessage();
             message.setPayload(publishMessage.getBytes());
