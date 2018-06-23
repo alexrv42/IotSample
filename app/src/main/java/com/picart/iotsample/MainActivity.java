@@ -28,29 +28,18 @@ import org.eclipse.paho.client.mqttv3.MqttMessage;
 
 
 public class MainActivity extends AppCompatActivity {
-
+    // para las tabs, no tocar
+    private SectionsPagerAdapter mSectionsPagerAdapter;
+    private ViewPager mViewPager;
 
     // Atributos a modificar
     String topicTemperatura = "sensores/temperatura";
     String topicHumedad = "sensores/humedad";
     final String publishTopic = "input";
     String broker = "192.168.1.64";
-    String publishMessage = "ON";
+    String mensajeOn = "ON";
+    String mensajeOff = "OFF";
 
-    /**
-     * The {@link android.support.v4.view.PagerAdapter} that will provide
-     * fragments for each of the sections. We use a
-     * {@link FragmentPagerAdapter} derivative, which will keep every
-     * loaded fragment in memory. If this becomes too memory intensive, it
-     * may be best to switch to a
-     * {@link android.support.v4.app.FragmentStatePagerAdapter}.
-     */
-    private SectionsPagerAdapter mSectionsPagerAdapter;
-
-    /**
-     * The {@link ViewPager} that will host the section contents.
-     */
-    private ViewPager mViewPager;
 
     // atributos avanzados
     MqttAndroidClient mqttAndroidClient;
@@ -92,8 +81,8 @@ public class MainActivity extends AppCompatActivity {
                     System.out.println("Conected to broker " + serverUri);
                     notificar("Conectado a broker: " + broker);
 
-                    suscribirATemperatura();
-                    suscribirAHumedad();
+                    suscribirTemperatura();
+                    suscribirHumedad();
                 }
 
 
@@ -211,11 +200,11 @@ public class MainActivity extends AppCompatActivity {
 
     /*---------------------------------------------------------------------------------------*/
     /* FUNCIONES DE MQTT */
-    public void suscribirATemperatura() {
+    public void suscribirTemperatura() {
         try {
 
             mqttAndroidClient.subscribe(topicTemperatura, 0, new IMqttMessageListener() {
-                @Override
+
                 public void messageArrived(String topic, MqttMessage message) {
                     // message Arrived!
                     String messageText = new String(message.getPayload());
@@ -235,13 +224,12 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
-    public void suscribirAHumedad() {
+    public void suscribirHumedad() {
         try {
 
             mqttAndroidClient.subscribe(topicHumedad, 0, new IMqttMessageListener() {
-                @Override
+
                 public void messageArrived(String topic, MqttMessage message) {
-                    // message Arrived!
                     String messageText = new String(message.getPayload());
                     System.out.println("Message: " + topic + " : " + messageText);
 
@@ -259,10 +247,28 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
-    public void publishMessage() {
+    public void botonOn(View v) {
         try {
             MqttMessage message = new MqttMessage();
-            message.setPayload(publishMessage.getBytes());
+            message.setPayload(mensajeOn.getBytes());
+            mqttAndroidClient.publish(publishTopic, message);
+            notificar("Mensaje publicado");
+            System.out.println("Message Published");
+            if (!mqttAndroidClient.isConnected()) {
+                System.out.println(mqttAndroidClient.getBufferedMessageCount() + " messages in buffer.");
+            }
+        } catch (MqttException e) {
+            notificar("Error publicando");
+            System.err.println("Error Publishing: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+
+    public void botonOff(View v) {
+        try {
+            MqttMessage message = new MqttMessage();
+            message.setPayload(mensajeOff.getBytes());
             mqttAndroidClient.publish(publishTopic, message);
             notificar("Mensaje publicado");
             System.out.println("Message Published");
