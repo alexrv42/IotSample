@@ -32,10 +32,11 @@ public class MainActivity extends AppCompatActivity {
     private SectionsPagerAdapter mSectionsPagerAdapter;
     private ViewPager mViewPager;
 
+
     // Atributos a modificar
     String topicTemperatura = "sensores/temperatura";
     String topicHumedad = "sensores/humedad";
-    final String publishTopic = "input";
+    String publishTopic = "input";
     String broker = "192.168.1.64";
     String mensajeOn = "ON";
     String mensajeOff = "OFF";
@@ -180,11 +181,9 @@ public class MainActivity extends AppCompatActivity {
 
             switch (position) {
                 case 0:
-                    MonitorTab monitorTab = new MonitorTab();
-                    return monitorTab;
+                    return new MonitorTab();
                 case 1:
-                    ControlTab controlTab = new ControlTab();
-                    return controlTab;
+                    return new ControlTab();
                 default:
                     return null;
             }
