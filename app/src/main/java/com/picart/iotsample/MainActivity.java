@@ -97,11 +97,7 @@ public class MainActivity extends AppCompatActivity {
             ex.printStackTrace();
         }
 
-
-
-        /* AQUÍ AGREGA EL LISTENER DEL BOTON ON */
-
-        /* AQUÍ AGREGA EL LISTENER DEL BOTON OFF */
+        
     }
 
 
